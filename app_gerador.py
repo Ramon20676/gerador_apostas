@@ -1,6 +1,8 @@
 import pandas as pd
 import streamlit as st
 import random
+import requests
+from io import BytesIO
 from collections import defaultdict
 
 # Função para calcular frequências
@@ -99,12 +101,12 @@ st.title("Gerador de Números para Loterias")
 
 st.write("Este gerador utiliza dados históricos da Mega-Sena para sugerir combinações baseadas na análise de frequência, respeitando a faixa de soma dos números e considerando números parceiros mais frequentes.")
 
-# Upload do arquivo Excel
-uploaded_file = st.file_uploader("Faça o upload do arquivo Excel com os resultados da Mega-Sena:", type="xlsx")
-
-if uploaded_file:
-    # Ler o arquivo Excel
-    df = pd.read_excel(uploaded_file)
+# Fazer download do arquivo Excel via request
+url_excel = "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Mega-Sena"
+st.write("Obtendo os resultados diretamente da fonte oficial...")
+response = requests.get(url_excel)
+if response.status_code == 200:
+    df = pd.read_excel(BytesIO(response.content))
 
     # Extrair os resultados dos sorteios
     resultados = df.iloc[:, 2:8].values.tolist()  # Considera que as colunas 2 a 7 contêm os números sorteados
@@ -155,3 +157,5 @@ if uploaded_file:
         st.subheader("20 Jogos Sugeridos:")
         for jogo in jogos_sugeridos:
             st.write(f"{jogo}")
+else:
+    st.error("Não foi possível obter os resultados. Verifique o link ou tente novamente mais tarde.")
