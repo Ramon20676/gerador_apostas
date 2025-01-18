@@ -44,7 +44,6 @@ def calcular_probabilidades_condicionais(resultados):
     return probabilidades
 
 # Função principal para gerar números com base nas técnicas combinadas
-# Função principal para gerar números com base nas técnicas combinadas
 def gerar_numeros(resultados, total_numeros=60, numeros_por_jogo=6):
     # Calcular frequências dos números
     frequencias = calcular_frequencias(resultados, total_numeros)
@@ -59,22 +58,35 @@ def gerar_numeros(resultados, total_numeros=60, numeros_por_jogo=6):
     jogos_sugeridos = []
     explicacoes = []
     for _ in range(20):
-        jogo = sorted(random.sample(numeros_ordenados[:30], numeros_por_jogo))  # Usa os 30 mais frequentes
+        # Randomiza o primeiro número entre os mais frequentes
+        primeiro_numero = random.choice(numeros_ordenados[:30])
+        jogo = [primeiro_numero]
 
-        explicacao_jogo = []
+        explicacao_jogo = [
+            f"O número {primeiro_numero} foi escolhido como ponto de partida devido à sua alta frequência nos sorteios."
+        ]
 
-        # Sempre ajustar o jogo usando probabilidades condicionais
-        for i, numero in enumerate(jogo):
-            if numero in probabilidades_condicionais:
+        # Adicionar números usando probabilidades condicionais
+        while len(jogo) < numeros_por_jogo:
+            ultimo_numero = jogo[-1]
+            if ultimo_numero in probabilidades_condicionais:
                 associados = sorted(
-                    probabilidades_condicionais[numero].items(), key=lambda x: x[1], reverse=True
+                    probabilidades_condicionais[ultimo_numero].items(), key=lambda x: x[1], reverse=True
                 )
                 for associado, prob in associados:
                     if associado not in jogo:
-                        # Substituir o número original por um baseado na probabilidade condicional
-                        jogo[i] = associado
+                        jogo.append(associado)
                         explicacao_jogo.append(
-                            f"Número {associado} foi escolhido porque o número {numero} aparece junto com ele em {prob:.2%} das vezes."
+                            f"O número {associado} foi incluído porque o número {ultimo_numero} aparece junto com ele em {prob:.2%} das vezes."
+                        )
+                        break
+            else:
+                # Se não houver probabilidades condicionais, completa com os mais frequentes
+                for numero in numeros_ordenados:
+                    if numero not in jogo:
+                        jogo.append(numero)
+                        explicacao_jogo.append(
+                            f"O número {numero} foi incluído para completar o jogo com base na análise de frequência."
                         )
                         break
 
@@ -94,14 +106,15 @@ st.markdown(
     1. **Análise de Frequência**: O gerador analisa os resultados históricos da loteria para identificar os números que foram sorteados com maior frequência.
     2. **Probabilidades Condicionais**: Ele também avalia quais números tendem a aparecer juntos em sorteios anteriores, calculando a probabilidade de co-ocorrência.
     3. **Geração de Jogos**: A partir dessas análises, o gerador:
-       - Prioriza os números mais frequentes.
-       - Adiciona números com base em probabilidades condicionais para formar jogos balanceados.
+       - Escolhe o primeiro número com base na frequência.
+       - Adiciona os próximos números com base nas probabilidades condicionais calculadas.
+       - Caso necessário, completa o jogo usando números mais frequentes.
     4. **Explicações Detalhadas**: Para cada jogo gerado, o aplicativo fornece explicações de por que certos números foram incluídos, destacando a relação entre eles.
     """
 )
 
 # Fazer download do arquivo Excel via request
-url_excel = "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Mega-Sena"
+url_excel = "https://loterias.caixa.gov.br/Paginas/Mega-Sena.aspx"
 st.write("Obtendo os resultados diretamente da fonte oficial...")
 response = requests.get(url_excel)
 if response.status_code == 200:
