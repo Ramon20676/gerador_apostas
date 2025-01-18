@@ -85,8 +85,20 @@ st.title("Gerador de Números para Loterias")
 
 st.write("Este gerador utiliza análise de frequência e probabilidades condicionais para sugerir combinações de números.")
 
+st.subheader("Como funciona o gerador:")
+st.markdown(
+    """
+    1. **Análise de Frequência**: O gerador analisa os resultados históricos da loteria para identificar os números que foram sorteados com maior frequência.
+    2. **Probabilidades Condicionais**: Ele também avalia quais números tendem a aparecer juntos em sorteios anteriores, calculando a probabilidade de co-ocorrência.
+    3. **Geração de Jogos**: A partir dessas análises, o gerador:
+       - Prioriza os números mais frequentes.
+       - Adiciona números com base em probabilidades condicionais para formar jogos balanceados.
+    4. **Explicações Detalhadas**: Para cada jogo gerado, o aplicativo fornece explicações de por que certos números foram incluídos, destacando a relação entre eles.
+    """
+)
+
 # Fazer download do arquivo Excel via request
-url_excel = "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Mega-Sena"
+url_excel = "https://loterias.caixa.gov.br/Paginas/Mega-Sena.aspx"
 st.write("Obtendo os resultados diretamente da fonte oficial...")
 response = requests.get(url_excel)
 if response.status_code == 200:
