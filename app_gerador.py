@@ -44,6 +44,7 @@ def calcular_probabilidades_condicionais(resultados):
     return probabilidades
 
 # Função principal para gerar números com base nas técnicas combinadas
+# Função principal para gerar números com base nas técnicas combinadas
 def gerar_numeros(resultados, total_numeros=60, numeros_por_jogo=6):
     # Calcular frequências dos números
     frequencias = calcular_frequencias(resultados, total_numeros)
@@ -62,17 +63,19 @@ def gerar_numeros(resultados, total_numeros=60, numeros_por_jogo=6):
 
         explicacao_jogo = []
 
-        # Ajustar o jogo usando probabilidades condicionais
-        for numero in jogo:
+        # Sempre ajustar o jogo usando probabilidades condicionais
+        for i, numero in enumerate(jogo):
             if numero in probabilidades_condicionais:
                 associados = sorted(
                     probabilidades_condicionais[numero].items(), key=lambda x: x[1], reverse=True
                 )
                 for associado, prob in associados:
-                    if associado not in jogo and len(jogo) < numeros_por_jogo:
-                        jogo.append(associado)
-                        jogo = sorted(set(jogo))[:numeros_por_jogo]
-                        explicacao_jogo.append(f"Número {associado} foi escolhido porque o número {numero} aparece junto com ele em {prob:.2%} das vezes.")
+                    if associado not in jogo:
+                        # Substituir o número original por um baseado na probabilidade condicional
+                        jogo[i] = associado
+                        explicacao_jogo.append(
+                            f"Número {associado} foi escolhido porque o número {numero} aparece junto com ele em {prob:.2%} das vezes."
+                        )
                         break
 
         jogos_sugeridos.append(sorted(jogo))
