@@ -86,7 +86,7 @@ st.title("Gerador de Números para Loterias")
 st.write("Este gerador utiliza análise de frequência e probabilidades condicionais para sugerir combinações de números.")
 
 # Fazer download do arquivo Excel via request
-url_excel = "https://loterias.caixa.gov.br/Paginas/Mega-Sena.aspx"
+url_excel = "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Mega-Sena"
 st.write("Obtendo os resultados diretamente da fonte oficial...")
 response = requests.get(url_excel)
 if response.status_code == 200:
