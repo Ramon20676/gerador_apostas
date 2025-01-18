@@ -14,8 +14,8 @@ def calcular_frequencias(resultados, total_numeros):
     return frequencias
 
 # Função para calcular frequência por dezenas
-def calcular_frequencias_dezenas(resultados):
-    dezenas = [0] * 6  # Para dezenas 1-10, 11-20, ..., 51-60
+def calcular_frequencias_dezenas(resultados, total_numeros):
+    dezenas = [0] * (total_numeros // 10 + 1)
     for jogo in resultados:
         for numero in jogo:
             indice = (numero - 1) // 10
@@ -44,7 +44,7 @@ def calcular_probabilidades_condicionais(resultados):
     return probabilidades
 
 # Função principal para gerar números com base nas técnicas combinadas
-def gerar_numeros(resultados, total_numeros=60, numeros_por_jogo=6):
+def gerar_numeros(resultados, total_numeros, numeros_por_jogo):
     # Calcular frequências dos números
     frequencias = calcular_frequencias(resultados, total_numeros)
 
@@ -54,10 +54,13 @@ def gerar_numeros(resultados, total_numeros=60, numeros_por_jogo=6):
     # Obter os números mais frequentes
     numeros_ordenados = sorted(range(1, total_numeros + 1), key=lambda x: frequencias[x - 1], reverse=True)
 
+    # Evitar jogos duplicados
+    resultados_existentes = [sorted(jogo) for jogo in resultados]
+
     # Gerar 20 jogos sugeridos usando as técnicas combinadas
     jogos_sugeridos = []
     explicacoes = []
-    for _ in range(20):
+    while len(jogos_sugeridos) < 20:
         # Randomiza o primeiro número entre os mais frequentes
         primeiro_numero = random.choice(numeros_ordenados[:30])
         jogo = [primeiro_numero]
@@ -90,46 +93,42 @@ def gerar_numeros(resultados, total_numeros=60, numeros_por_jogo=6):
                         )
                         break
 
-        jogos_sugeridos.append(sorted(jogo))
-        explicacoes.append(explicacao_jogo)
+        jogo = sorted(jogo)
+        if jogo not in resultados_existentes and jogo not in jogos_sugeridos:
+            jogos_sugeridos.append(jogo)
+            explicacoes.append(explicacao_jogo)
 
     return frequencias, probabilidades_condicionais, jogos_sugeridos, explicacoes
 
 # Interface no Streamlit
 st.title("Gerador de Números para Loterias")
 
-st.write("Este gerador utiliza análise de frequência e probabilidades condicionais para sugerir combinações de números.")
+# Botão para escolher o tipo de loteria
+tipo_loteria = st.radio("Selecione a loteria:", ("Mega-Sena", "Lotofácil"))
 
-st.subheader("Como funciona o gerador:")
-st.markdown(
-    """
-    1. **Análise de Frequência**: O gerador analisa os resultados históricos da loteria para identificar os números que foram sorteados com maior frequência.
-    2. **Probabilidades Condicionais**: Ele também avalia quais números tendem a aparecer juntos em sorteios anteriores, calculando a probabilidade de co-ocorrência.
-    3. **Geração de Jogos**: A partir dessas análises, o gerador:
-       - Escolhe o primeiro número com base na frequência.
-       - Adiciona os próximos números com base nas probabilidades condicionais calculadas.
-       - Caso necessário, completa o jogo usando números mais frequentes.
-    4. **Explicações Detalhadas**: Para cada jogo gerado, o aplicativo fornece explicações de por que certos números foram incluídos, destacando a relação entre eles.
-    """
-)
+if tipo_loteria == "Mega-Sena":
+    total_numeros = 60
+    numeros_por_jogo = 6
+    url_excel = "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Mega-Sena"
+else:
+    total_numeros = 25
+    numeros_por_jogo = 15
+    url_excel = "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Lotof%C3%A1cil"
 
-# Fazer download do arquivo Excel via request
-url_excel = "https://servicebus2.caixa.gov.br/portaldeloterias/api/resultados/download?modalidade=Mega-Sena"
-st.write("Obtendo os resultados diretamente da fonte oficial...")
+st.write(f"Obtendo os resultados da {tipo_loteria} diretamente da fonte oficial...")
 response = requests.get(url_excel)
 if response.status_code == 200:
     df = pd.read_excel(BytesIO(response.content))
 
-    # Extrair os resultados dos sorteios
-    resultados = df.iloc[:, 2:8].values.tolist()  # Considera que as colunas 2 a 7 contêm os números sorteados
+    # Ajustar as colunas de acordo com o tipo de loteria
+    if tipo_loteria == "Mega-Sena":
+        resultados = df.iloc[:, 2:8].values.tolist()  # Mega-Sena: 6 números
+    else:
+        resultados = df.iloc[:, 2:17].values.tolist()  # Lotofácil: 15 números
 
-    numeros_por_jogo = st.number_input(
-        "Quantos números por jogo?", min_value=1, max_value=15, value=6
-    )
-
-    if st.button("Gerar Números"):
+    if st.button(f"Gerar Números para {tipo_loteria}"):
         frequencias, probabilidades_condicionais, jogos_sugeridos, explicacoes = gerar_numeros(
-            resultados, total_numeros=60, numeros_por_jogo=numeros_por_jogo
+            resultados, total_numeros=total_numeros, numeros_por_jogo=numeros_por_jogo
         )
 
         st.subheader("Frequências dos Números:")
@@ -140,10 +139,11 @@ if response.status_code == 200:
             associados_ordenados = sorted(associados.items(), key=lambda x: x[1], reverse=True)[:5]
             st.write(f"Número {numero}: {[f'{n} ({p:.2%})' for n, p in associados_ordenados]}")
 
-        st.subheader("20 Jogos Sugeridos:")
+        st.subheader(f"20 Jogos Sugeridos para {tipo_loteria}:")
         for jogo, explicacao in zip(jogos_sugeridos, explicacoes):
             st.write(f"{jogo}")
             for detalhe in explicacao:
                 st.caption(detalhe)
 else:
     st.error("Não foi possível obter os resultados. Verifique o link ou tente novamente mais tarde.")
+
