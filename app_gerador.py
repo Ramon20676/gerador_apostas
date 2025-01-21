@@ -3,7 +3,7 @@ import streamlit as st
 import random
 import requests
 from io import BytesIO
-from collections import defaultdict
+from collections import defaultdict 
 
 # Função para calcular frequências
 def calcular_frequencias(resultados, total_numeros):
